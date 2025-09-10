@@ -91,6 +91,8 @@ app.post("/auth/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
 
+    console.log(email, senha)
+
     const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email])
     if (rows.length === 0) { // Corrigi "lenght" para "length"
       return res.status(400).json({ error: "Usuário não encontrado!" }) // Corrigi a mensagem de erro
@@ -121,7 +123,7 @@ app.post("/auth/login", async (req, res) => {
 app.get("/auth/profile", autenticarToken, async (req, res) => {
 
   try {
-    const [rows] = await pool.query("SELECT nome FROM users WHERE email = ?", [req.user.email]) // Corrigi de req.user.id para req.user.email
+    const [rows] = await pool.query("SELECT nome, email FROM users WHERE email = ?", [req.user.email]) // Corrigi de req.user.id para req.user.email
 
     if (rows.length === 0) { // Corrigi "lenght" para "length"
       return res.status(404).json({ error: "Usuário não encontrado." }) // Corrigi a mensagem de erro
@@ -157,6 +159,41 @@ app.put("/auth/update", autenticarToken, async (req, res) => {
   }
 
 })
+
+// Rota: DELETE
+app.delete("/auth/delete", autenticarToken, async (req, res) => {
+
+  try {
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [req.user.id]) // Corrigi de req.user.id para req.user.email
+
+    if (rows.length === 0) { // Corrigi "lenght" para "length"
+      return res.status(404).json({ error: "Usuário não encontrado." }) // Corrigi a mensagem de erro
+    }
+
+    console.log(req.user.id)
+    await pool.query(
+      "DELETE FROM users WHERE id = ?", [req.user.id] // Corrigi a query para passar req.user.id corretamente
+    )
+
+    res.json({ message: "Dados removidos com sucesso!" })
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Erro ao atualizar usuário!" })
+  }
+
+})
+
+async function conexaoBd() {
+  try {
+    const conn = await pool.getConnection();
+    console.log("Conexão com MYSQL bem sucedida!")
+    conn.release(); // Corrigi o "relese" para "release"
+  } catch (error) {
+    console.log(`Error: ${error}`)
+  }
+}
+
 
 async function conexaoBd() {
   try {
